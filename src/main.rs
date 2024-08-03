@@ -1,9 +1,8 @@
 use poise::{
-    self,
-    serenity_prelude::{
-        self as serenity,
-        model::gateway::GatewayIntents
-    }
+    self, serenity_prelude::{
+        self as serenity, model::gateway::GatewayIntents, Colour, CreateEmbed, 
+        Error as SerenityError
+    }, CreateReply, ReplyHandle
 };
 use tokio;
 use dotenvy::dotenv;
@@ -16,6 +15,35 @@ use std::{env, sync::Arc, time::Duration};
 type Error = Box<dyn std::error::Error + Send + Sync>;
 #[allow(unused)]
 type Context<'a> = poise::Context<'a, Data, Error>;
+
+trait ContextOP<'a> {
+    async fn text(&self, text: &str) -> Result<ReplyHandle<'_>, SerenityError>;
+    async fn image(&self, url: String) -> Result<ReplyHandle<'_>, SerenityError>;
+}
+
+impl<'a> ContextOP<'a> for Context<'_> {
+    async fn text(&self, text: &str) -> Result<ReplyHandle<'_>, SerenityError> {
+        let embed = CreateEmbed::new()
+            .color(Colour::from_rgb(43,45,49))
+            .description(String::from(text));
+
+        let reply = CreateReply::default()
+                .embed(embed);
+
+        self.send( reply).await
+    }
+
+    async fn image(&self, url: String) -> Result<ReplyHandle<'_>, SerenityError> {
+        let embed = CreateEmbed::new()
+            .color(Colour::from_rgb(43,45,49))
+            .image(url);
+
+        let reply = CreateReply::default()
+                .embed(embed);
+
+        self.send( reply).await
+    }
+}
 
 pub struct Data {}
 
@@ -31,7 +59,9 @@ async fn main() {
 
     let commands = vec![
         commands::ping(),
-        commands::kanye()
+        commands::kanye(),
+        commands::help(),
+        commands::screenshot(),
     ];
 
     let framework = poise::Framework::builder()
