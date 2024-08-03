@@ -1,3 +1,4 @@
+use poise::{serenity_prelude::CreateAttachment, CreateReply};
 use serde::{Deserialize, Serialize};
 
 use crate::{Context, ContextOP, Error};
@@ -98,7 +99,17 @@ pub async fn screenshot
 
     let ss = format!("https://image.thum.io/get/width/1080/crop/760/{url}");
 
-    ctx.image(ss).await?;
+    let pic = CreateAttachment::url(&ctx.http(), &ss).await;
+
+    let rep = match pic {
+        Ok(mut pic) => {
+            pic.filename = String::from("ss.png");
+            CreateReply::default().attachment(pic)
+        },
+        _ => CreateReply::default().content("Couldn't get the image")
+    };
+
+    ctx.send(rep).await?;
 
     Ok(())
 }
