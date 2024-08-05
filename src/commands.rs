@@ -99,7 +99,7 @@ pub async fn screenshot
         url = format!("https://{url}");
     }
 
-    let ss = format!("https://image.thum.io/get/width/1080/crop/760/{url}");
+    let ss = format!("https://image.thum.io/get/width/1080/crop/760/maxAge/1/png/{url}");
 
     let pic = CreateAttachment::url(&ctx.http(), &ss).await;
 
