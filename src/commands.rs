@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Context, ContextOP, Error};
 
+
+
 #[derive(Debug, Serialize, Deserialize)]
 struct YeQuote {
     quote: String
@@ -110,6 +112,24 @@ pub async fn screenshot
     };
 
     ctx.send(rep).await?;
+
+    Ok(())
+}
+
+#[poise::command(
+    prefix_command,
+    track_edits, 
+    slash_command,  
+    install_context = "Guild|User",
+    interaction_context = "Guild|BotDm|PrivateChannel"
+    
+)]
+pub async fn ai(
+    ctx: Context<'_>
+) -> Result<(), Error> {  // no really
+    let tx = ctx.data().mark.generate_str();
+
+    ctx.reply(&tx).await?;
 
     Ok(())
 }

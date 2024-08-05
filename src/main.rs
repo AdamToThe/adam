@@ -1,15 +1,17 @@
 use poise::{
     self, serenity_prelude::{
-        self as serenity, model::gateway::GatewayIntents, Colour, CreateEmbed, 
-        Error as SerenityError
+        self as serenity, model::gateway::GatewayIntents, Colour, CreateEmbed, CreateEmbedFooter, Error as SerenityError
     }, CreateReply, ReplyHandle
 };
 use tokio;
 use dotenvy::dotenv;
+use core::hash::Hash;
+
+use markov::{Chain, Chainable};
 
 mod commands;
 
-use std::{env, sync::Arc, time::Duration};
+use std::{env, fs::File, io::{BufRead, BufReader}, sync::Arc, time::Duration};
 
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -18,6 +20,7 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 
 trait ContextOP<'a> {
     async fn text(&self, text: &str) -> Result<ReplyHandle<'_>, SerenityError>;
+    #[warn(dead_code)]
     async fn image(&self, url: String) -> Result<ReplyHandle<'_>, SerenityError>;
 }
 
@@ -25,7 +28,8 @@ impl<'a> ContextOP<'a> for Context<'_> {
     async fn text(&self, text: &str) -> Result<ReplyHandle<'_>, SerenityError> {
         let embed = CreateEmbed::new()
             .color(Colour::from_rgb(43,45,49))
-            .description(String::from(text));
+            .description(String::from(text))
+            .footer(CreateEmbedFooter::new("[adam]"));
 
         let reply = CreateReply::default()
                 .embed(embed);
@@ -33,6 +37,7 @@ impl<'a> ContextOP<'a> for Context<'_> {
         self.send( reply).await
     }
 
+    #[warn(dead_code)]
     async fn image(&self, url: String) -> Result<ReplyHandle<'_>, SerenityError> {
         let embed = CreateEmbed::new()
             .color(Colour::from_rgb(43,45,49))
@@ -45,7 +50,9 @@ impl<'a> ContextOP<'a> for Context<'_> {
     }
 }
 
-pub struct Data {}
+pub struct Data {
+    mark: Chain<String>
+}
 
 #[tokio::main]
 async fn main() {
@@ -62,13 +69,31 @@ async fn main() {
         commands::kanye(),
         commands::help(),
         commands::screenshot(),
+        commands::ai(),
     ];
+
+    
+    let mut chain: Chain<String> = Chain::new();
+
+    let file = File::open("messages.txt").expect("no messages.txt file");
+    let reader = BufReader::new(file);
+
+    for line in reader.lines() {
+        match line {
+            Ok(line) => {
+                chain.feed_str(&line);
+            }
+            _ => continue
+        }
+    }
 
     let framework = poise::Framework::builder()
         .setup(move |ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data {})
+                Ok(Data {
+                    mark: chain
+                })
             })
         })
         .options(poise::FrameworkOptions {

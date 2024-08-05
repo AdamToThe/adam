@@ -12,3 +12,5 @@ poise = { git = "https://github.com/fgardt/poise", branch = "feat/user_apps", fe
 tokio = { version = "1.39.2", features = ["macros", "rt-multi-thread"] }
 reqwest = { version = "*", features = ["json", "blocking"] }
 serde = "1.0.204"
+markov-generator = "0.1.5"
+markov = "1.1.0"
